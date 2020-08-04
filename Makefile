@@ -7,7 +7,7 @@ SRC=src
 DEBUGOUT=build
 RELEASEOUT=release
 
-FLAGS=-d:ssl
+FLAGS=-d:ssl --app:gui
 
 DEBUGOPTS=$(FLAGS) --outdir:$(DEBUGOUT)
 RELEASEOPTS=$(FLAGS) --outdir:$(RELEASEOUT) -d:release
