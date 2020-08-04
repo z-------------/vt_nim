@@ -12,6 +12,8 @@ FLAGS=-d:ssl
 DEBUGOPTS=$(FLAGS) --outdir:$(DEBUGOUT)
 RELEASEOPTS=$(FLAGS) --outdir:$(RELEASEOUT) -d:release
 
+.PHONY: run debug release clean
+
 run:
 	$(NIM) $(DEBUGOPTS) -r $(SRC)/$(MAIN)
 
