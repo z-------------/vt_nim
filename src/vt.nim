@@ -26,7 +26,7 @@ const
   vtOk* = 1
 
 proc newVTClient*(apikey: string): VTClient =
-  assert(apikey.len > 0)
+  doAssert(apikey.len > 0)
   VTClient(apikey: apikey)
 
 proc report*(vtc: VTClient; resource: string): Future[JsonNode] {.async.} =

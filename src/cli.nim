@@ -10,7 +10,7 @@ const Key = staticRead("../key").strip()
 
 # get filename
 
-assert(paramCount() > 0, "No filename provided.")
+doAssert(paramCount() > 0, "No filename provided.")
 let filename = paramStr(1)
 let filepath = joinPath(getCurrentDir(), filename)
 echo "path: ", filepath
