@@ -7,10 +7,10 @@ SRC=src
 DEBUGOUT=build
 RELEASEOUT=release
 
-FLAGS=-d:ssl --app:gui
+FLAGS=-d:ssl
 
 DEBUGOPTS=$(FLAGS) --outdir:$(DEBUGOUT)
-RELEASEOPTS=$(FLAGS) --outdir:$(RELEASEOUT) -d:release
+RELEASEOPTS=$(FLAGS) --outdir:$(RELEASEOUT) -d:release --app:gui
 
 .PHONY: run debug release clean
 
