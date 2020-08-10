@@ -103,11 +103,17 @@ proc displayFilename(filename: string) =
 proc clearHash() =
   hashTxt.label = PlaceholderText
 
+proc showHashProgress() =
+  hashTxt.label = "Calculating..."
+
 proc displayHash(hash: string) =
   hashTxt.label = hash
 
 proc clearReportSummary() =
   reportTxt.label = PlaceholderText
+
+proc showReportSummaryProgress() =
+  reportTxt.label = "Loading..."
 
 proc displayReportSummary(report: JsonNode) =
   var text: string
@@ -177,9 +183,11 @@ fileChooseBtn.wEvent_Button do ():
     state.filename = filename
     displayFilename(filename)
 
+    showHashProgress()
     let hash = getSHA256(filename)
     displayHash(hash)
-
+    
+    showReportSummaryProgress()
     let report = waitFor vtc.report(hash)
     displayReport(report)
 
