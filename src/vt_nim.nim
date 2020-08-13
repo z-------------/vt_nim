@@ -26,6 +26,8 @@ var state = State()
 let
   vtc = newVTClient(Key)
 
+  hashPtr = cast[ptr SHA256Digest](alloc0(sizeof(SHA256Digest)))
+
   app = App()
   frame = Frame(title="vt_nim", size=(500, 300))
   panel = Panel(frame)
@@ -192,9 +194,8 @@ proc displayReport(report: JsonNode) =
 
 proc hashThreadProc(h: HWnd, filename: string) {.thread.} =
   let hash = getSHA256(filename)
-  var hashPtr = cast[ptr SHA256Digest](alloc0(sizeof(SHA256Digest)))
   hashPtr[] = hash
-  SendMessage(h, wEvent_App, evtHash, cast[LParam](hashPtr))
+  SendMessage(h, wEvent_App, evtHash, 0)
 
 #
 # event handlers
@@ -203,9 +204,7 @@ proc hashThreadProc(h: HWnd, filename: string) {.thread.} =
 frame.connect(wEvent_App) do (event: wEvent):
   let kind = event.wParam
   if kind == evtHash:
-    let hashPtr = cast[ptr SHA256Digest](event.lParam)
     let hash = hashPtr.toHex()
-
     displayHash(hash)
       
     showReportSummaryProgress()
