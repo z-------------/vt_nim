@@ -1,9 +1,11 @@
 import wNim / [wApp, wFrame, wPanel, wButton, wFileDialog, wStaticText, wListCtrl]
+import winim / lean
 import json
 from os import splitPath
-import strformat
+import threadpool
 import strutils
 import asyncdispatch
+import ./cenum
 import ./bitoptemplates
 import ./sha
 import ./vt
@@ -12,6 +14,9 @@ const
   Key = staticRead("../key").strip()
   Margin = 10
   PlaceholderText = "--"
+
+cenum(WParam):
+  evtHash
 
 type State = object
   filename: string
@@ -38,7 +43,9 @@ let
   uploadBtn = Button(panel, label="Upload for scanning")
   uploadTxt = StaticText(panel, style=wAlignLeft)
 
-# layout #
+#
+# layout
+#
 
 panel.layout:
   fileChooseBtn:
@@ -85,7 +92,9 @@ reportList.appendColumn(text="Result")
 
 uploadBtn.disable()
 
-# data helpers #
+#
+# data helpers
+#
 
 proc getReportResponseCode(report: JsonNode): int {.inline.} =
   report["response_code"].getInt()
@@ -93,7 +102,9 @@ proc getReportResponseCode(report: JsonNode): int {.inline.} =
 proc reportIsOk(report: JsonNode): bool {.inline.} =
   getReportResponseCode(report) == vtOk
 
-# ui stuff #
+#
+# ui stuff
+#
 
 proc clearFilename() =
   filenameTxt.label = PlaceholderText
@@ -124,7 +135,7 @@ proc displayReportSummary(report: JsonNode) =
       # scanDate = report["scan_date"].getStr()
       countTotal = report["total"].getInt()
       countPositive = report["positives"].getInt()
-    text = &"{countPositive} / {countTotal}"
+    text = $countPositive & " / " & $countTotal
   else:  # vtError or vtQueued
     text = report["verbose_msg"].getStr()
   
@@ -141,6 +152,12 @@ proc displayReportList(report: JsonNode) =
     if scans[engineName]["detected"].getBool():
       let result = scans[engineName]["result"].getStr()
       reportList.appendItem(texts=[engineName, result])
+
+proc disableFileChooseBtn() =
+  fileChooseBtn.disable()
+
+proc resetFileChooseBtn() =
+  fileChooseBtn.enable()
 
 proc enableUploadBtn() =
   uploadBtn.enable()
@@ -169,13 +186,42 @@ proc displayReport(report: JsonNode) =
   if responseCode == vtError:
     enableUploadBtn()
 
-# event handlers #
+#
+# thread procs
+#
 
-fileChooseBtn.wEvent_Button do ():
+proc hashThreadProc(h: HWnd, filename: string) {.thread.} =
+  let hash = getSHA256(filename)
+  var hashPtr = cast[ptr SHA256Digest](alloc0(sizeof(SHA256Digest)))
+  hashPtr[] = hash
+  SendMessage(h, wEvent_App, evtHash, cast[LParam](hashPtr))
+
+#
+# event handlers
+#
+
+frame.connect(wEvent_App) do (event: wEvent):
+  let kind = event.wParam
+  if kind == evtHash:
+    let hashPtr = cast[ptr SHA256Digest](event.lParam)
+    let hash = hashPtr.toHex()
+
+    displayHash(hash)
+      
+    showReportSummaryProgress()
+    let report = waitFor vtc.report(hash)
+    displayReport(report)
+
+    resetFileChooseBtn()
+  else:
+    echo "Unknown app event: " & $kind & "."
+
+fileChooseBtn.connect(wEvent_Button) do ():
   let
     dialog = FileDialog(frame, message="Choose a file", style=(wFdOpen | wFdFileMustExist))
     filenames = dialog.display()
   if filenames.len > 0:
+    disableFileChooseBtn()
     clearFilename()
     clearHash()
     clearReport()
@@ -185,14 +231,9 @@ fileChooseBtn.wEvent_Button do ():
     displayFilename(filename)
 
     showHashProgress()
-    let hash = getSHA256(filename)
-    displayHash(hash)
-    
-    showReportSummaryProgress()
-    let report = waitFor vtc.report(hash)
-    displayReport(report)
+    spawn hashThreadProc(frame.handle, filename)
 
-uploadBtn.wEvent_Button do ():
+uploadBtn.connect(wEvent_Button) do ():
   doAssert(state.filename.len > 0)
   let result = waitFor vtc.scan(state.filename)
   let
@@ -202,7 +243,9 @@ uploadBtn.wEvent_Button do ():
   if responseCode == vtOk:
     resetUploadBtn()
 
-# main #
+#
+# main
+#
 
 frame.center()
 frame.show()

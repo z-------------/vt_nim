@@ -11,4 +11,7 @@ bin           = @["vt_nim"]
 
 # Dependencies
 
-requires "nim >= 1.2.6, nimSHA2 >= 0.1.1, wNim >= 0.11.2"
+requires "nim >= 1.2.6"
+requires "nimSHA2 >= 0.1.1"
+requires "wNim >= 0.11.2"
+requires "winim >= 3.4.0"
