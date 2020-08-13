@@ -4,6 +4,7 @@ from os import splitPath
 import strformat
 import strutils
 import asyncdispatch
+import ./bitoptemplates
 import ./sha
 import ./vt
 
@@ -172,7 +173,7 @@ proc displayReport(report: JsonNode) =
 
 fileChooseBtn.wEvent_Button do ():
   let
-    dialog = FileDialog(frame, message="Choose a file", style=(wFdOpen or wFdFileMustExist))
+    dialog = FileDialog(frame, message="Choose a file", style=(wFdOpen | wFdFileMustExist))
     filenames = dialog.display()
   if filenames.len > 0:
     clearFilename()
