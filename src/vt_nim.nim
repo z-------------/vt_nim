@@ -204,7 +204,7 @@ proc hashThreadProc(h: HWnd, filename: string) {.thread.} =
 frame.connect(wEvent_App) do (event: wEvent):
   let kind = event.wParam
   if kind == evtHash:
-    let hash = hashPtr.toHex()
+    let hash = hashPtr[].toHex()
     displayHash(hash)
       
     showReportSummaryProgress()
